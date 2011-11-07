@@ -1,31 +1,77 @@
 \input{preamble.tex}
 \begin{document}
 \part*{EMB 2010 Team3 ExerciseADC}
-\section{Successive Approximation technique (SAR)}
-something
-\begin{figure}[htbp!]		%Remember to put the h!, to not fuck the sections.
-	\begin{centering}
- 		\includegraphics[width=1.0\textwidth]{images/sar.png}
-		\caption{4-bit Successive Approximation Register}
-	\end{centering}
-\end{figure}
 
-\section{Flash conversion technique}
-something
-\section{Sigma Delta conversion principle}
-something
-\section{Sample and hold circuits}
-something
 \section{R2R ladders}
-something
-\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+http://en.wikipedia.org/wiki/Resistor\_ladder
+\begin{figure}[htbp!]		%Remember to put the h!, to not fuck the sections.
 	\begin{centering}
  		\includegraphics[width=1.0\textwidth]{images/r2r.png}
 		\caption{r2r ladder}
 	\end{centering}
 \end{figure}
+\newpage
+\section{Successive Approximation technique (SAR)}
+The successive approximation technique uses an comparator to check for comparison between the voltage that wants to be read and an internal
+value that represents the middle value of the current range.
+\\ \textbf{Example VREF = 5}
+\begin{itemize}
+	\item Internal value set to half the range 5 - 0 = 2.5V
+	\item Value is \textbf{below}, new range 2.5 - 0 = 1.25V
+	\item Value is \textbf{above}, new range 2.5 - 1.25 = 1.875
+	\item Value is \textbf{below}, new range 1.875 - 1.25 = 1.5625
+	\item Value is \textbf{above}, final value = \textbf{1.875}
+\end{itemize}
+\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+	\begin{centering}
+ 		\includegraphics[width=0.7\textwidth]{images/sar.png}
+		\caption{4-bit Successive Approximation Register}
+	\end{centering}
+\end{figure}
+\newpage
+\section{Flash conversion technique}
+\textbf{Flash conversion / Flash ADC / Direct-Conversion ADC}\\
+This setup has a bank of comparators which makes it possible to sample the input signal in parallel, where each comparator have a certain voltage range.
+All the comparators feeds an logic circuits which generates a binary code of the inputted voltage.\\
+\\ \textit{Note that ADC using this circuit setup is rarely seen in bigger resolutions than 8 bits as the amount of comparators needed doubles for each bit added to the precision.}
+\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+	\begin{centering}
+ 		\includegraphics[width=0.6\textwidth]{images/flash_conv.png}
+		\caption{Flash conversion setup}
+	\end{centering}
+\end{figure}
+\newpage
+\section{Sigma Delta conversion principle}
+Down below an example of implementing the Sigma Delta is shown.
+\\ The circuit simply counts how many trigger pulses that have occurred within a certain time (specified by the 'Summing Interval') and
+from that a frequency is calculated.
+\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+	\begin{centering}
+ 		\includegraphics[width=0.7\textwidth]{images/sigma_delta.png}
+		\caption{Block diagram of an sigma-delta ADC}
+	\end{centering}
+\end{figure}
 
+\newpage
+\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+	\begin{centering}
+ 		\includegraphics[width=0.6\textwidth]{images/sigma_delta2.png}
+		\caption{Block diagram of an sigma-delta ADC}
+	\end{centering}
+\end{figure}
+
+\newpage
+\section{Sample and hold circuits}
+The sample and hold circuit is used to 'freeze' the analog value at a time and thereafter read the value.
+\begin{figure}[h!]		%Remember to put the h!, to not fuck the sections.
+	\begin{centering}
+ 		\includegraphics[width=0.5\textwidth]{images/sample_hold.png}
+		\caption{Threshold voltage }
+	\end{centering}
+\end{figure}
+
+\newpage
 \section{Bandwidth vs. resolution for the different types}
-something
+What conversion type is the fastest, and which one is the most precise?
 
 \end{document}
