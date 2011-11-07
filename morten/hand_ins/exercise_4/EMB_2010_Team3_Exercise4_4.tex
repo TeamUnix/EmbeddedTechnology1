@@ -4,11 +4,38 @@
 \section{Introduction}
 The job is to create a spi.c (and a spi.h) file containing two functions. A initialization of the SPI line and a transfer function.
 Sending data from the master device (the LPC2478) to its slave devices (the display- and touch controllers). 
-Also the goal with this exercise is to read and understand code provided by others, where small changes can/should be done to
+Also the goal with this exercise is to read and understand code provided by others, where changes can be done to
 fit the project it should be used.
+\\ \newline
+In the below figure is seen how the clock is routed through the system to the ADC block. The clock value putted into the block is 28.8MHz.
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.7\textwidth]{peripheral_clock_gen.png}
+   \caption{Peripheral clock scaling}
+   \label{fig:example}
+\end{figure}
 \section{Initialization}
-In the calib\_app.c function the SPIInit function is called with some parameters, therefore a function has been build that takes these parameters. The parameters are: Clock, Framesize, CPHA, CPOL, LSBF.
 
+In the calib\_app.c function the SPIInit function is called with some parameters, therefore a function has been build that takes these parameters. 
+The parameters are: Clock, Framesize, CPHA, CPOL, LSBF. These parameters have been chosen because of the arguments passed to the 
+SPIInit function in the calibrateStart function (found in the calib\_app)
+\begin{lstlisting}
+	/* SSD1289 fclk max 13MHz, clk HI idle, MSB first */
+	/* SPIInit(wClock, nFramesize, bCPHA, bCPOL, bLSBF)*/
+	SPIInit(CLK5M, 8, 0, 1, 0);
+	
+	/* tsc2046:fclk max 2.5MHz, clk LO idle, MSB first
+	* SPIInit(wClock, nFramesize, bCPHA, bCPOL, bLSBF)*/
+	SPIInit(CLK2M5, 8, 0, 0, 0);
+\end{lstlisting}
+
+The SPIInit function takes 5 parameters, where the clock speed can be changed, the size and direction (LSB/MSB first) of the data package,
+which edge is used for setting up new data and which is used to clock out data.
+The display is setup to data sampling on falling edge, and other data is driven on rising edge. The touch is setup opposite, samples data on rising edge and other data 
+is driven og falling edge.
+\\ The pins p0.15, p0.17 and p0.18 is used as SCK, MISO and MOSI pins. Other than that p0.20 (touch) and p0.16 (QVGA) are used as Chip-select pins. 
+Note that the Chip-select pins are not set in this function but has already been implemented in the project in the files: 
+lcd\_driver.c and touch.c
 \begin{lstlisting}
 void SPIInit(short wClock, char nFramesize, char bCPHA, char bCPOL, char bLSBF){
 	//1. Power: In the PCONP register set bit PCSPI.
@@ -38,8 +65,9 @@ void SPIInit(short wClock, char nFramesize, char bCPHA, char bCPOL, char bLSBF){
 	//S0SPINT = 0;		//RW SPI Interrupt Register
 }
 \end{lstlisting}
-
-The send spi function:
+The send spi function is straight forward. Data that should be to be sent is putted in the data register, whereafter the system waits for the 
+\textit{transfer complete flag} to go high. The function returns the status register. If the \textit{transfer complete flag} has not been set within 
+the value errorcount has counted to 10000 the function also returns (timeout).
 \begin{lstlisting}
 unsigned short SpiXfer(unsigned short nData){
 	unsigned int errorcount = 0;
@@ -48,11 +76,21 @@ unsigned short SpiXfer(unsigned short nData){
 	S0SPDR = nData;
 		//Wait for the transfer complete flag to go high
 		//If it has not occured before 10000 clocs the function returns an error
-	while ((S0SPSR & 0x80) == 0 && errorcount < 10000);
+	while ((S0SPSR & 0x80) == 0 && errorcount < 10000)
 		errorcount++;
 
 	return (S0SPDR);
 }
-
 \end{lstlisting}
+\newpage
+\section{It's alive...}
+When the calibration is done, the program continue calling lcd\_test, which is a function that draws something one the screen where the screen is touched.
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=0.4\textwidth]{lcd_test.jpg}
+   \caption{Touch screen test (after calibration)}
+   \label{fig:example}
+\end{figure}
+\textbf{ }\\ \newline
+The code functions used in shortly and well described in the \textit{Exercise\_4} document provided, so no need to repetition.
 \end{document}
