@@ -70,14 +70,14 @@ The send spi function is straight forward. Data that should be to be sent is put
 the value errorcount has counted to 10000 the function also returns (timeout).
 \begin{lstlisting}
 unsigned short SpiXfer(unsigned short nData){
-	unsigned int errorcount = 0;
+	unsigned int timeout = 0;
 
 		//Put data to be sent into the data register
 	S0SPDR = nData;
 		//Wait for the transfer complete flag to go high
 		//If it has not occured before 10000 clocs the function returns an error
-	while ((S0SPSR & 0x80) == 0 && errorcount < 10000)
-		errorcount++;
+	while ((S0SPSR & 0x80) == 0 && timeout < 10000)
+		timeout++;
 
 	return (S0SPDR);
 }
@@ -92,5 +92,5 @@ When the calibration is done, the program continue calling lcd\_test, which is a
    \label{fig:example}
 \end{figure}
 \textbf{ }\\ \newline
-The code functions used in shortly and well described in the \textit{Exercise\_4} document provided, so no need to repetition.
+The code functions used (the once called from the calibratestart() function) is shortly and well described in the \textit{Exercise\_4} document provided, so no need to repetition (can also be seen as laziness).
 \end{document}
