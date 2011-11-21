@@ -2,11 +2,11 @@
 \begin{document}
 \part*{EMB 2010 Team3 Exercise5}
 \section{Introduction}
-In this exercise we  are able to create a 2 channel voltmeter that displays the measured voltage on the LCD display using SWIM ( Simple Window Interface Manager).
-A driver will be created for the LPC 2478 built-in analog to digital converter (adc).
-A draw file is created to make easy the development of a graphical layout on the LCD display, making possible further improvements. 
+This exercise is about creating a 2 channel voltmeter that displays the measured voltage on the LCD display using SWIM ( Simple Window Interface Manager).
+A driver is created for the LPC 2478 built-in analog to digital converter (ADC).
+A file (draw.c) is created to make the development of a graphical layout on the LCD display easier and also making possible further improvements easy to implement. 
 \\ \newline
-In the below figure is seen how the clock is routed through the system to the ADC block. The clock value putted into the block is 28.8MHz.
+In the below figure is seen how the clock is routed through the system to the ADC block. The clock value putted into the ADC block is 28.8MHz.
 \\ \newline
 \begin{figure}[h!]
    \centering
@@ -18,23 +18,23 @@ In the below figure is seen how the clock is routed through the system to the AD
 \newpage
 \section{Initialization}
 
-The ADC is initialised by the function initAdc(unsigned char CLKDIV, unsigned char CLKS, unsigned short SEL).
+The ADC is initialized by the function initAdc(unsigned char CLKDIV, unsigned char CLKS, unsigned short SEL).
 \\ \newline
-The initialisation starts by powering up (enabling) the ADC register this is disabled at the reset for power saving purpose since it may consume power that is not clock dependent.
+The initialisation starts by powering up (enabling) the ADC channels, these are disabled at the reset for power saving purpose since it may consume power that is not clock dependent.
 \begin{lstlisting} 
 	PCONP |= (1<<12);
  \end{lstlisting}
 
-The clock has to be set and scaled since the ADC works at a lower frequency this is done by setting the peripheral clock selection to PCLK\_ADC (bit 25 and 24), this will control the clock rate to be suitable for the analog to digital conversion.
+The clock is scaled to a lower frequency, by setting the peripheral clock selection to PCLK\_ADC (bit 25 and 24). We've chosen to divide the CCLK with 2 and do the rest of the scaling down to 4.5MHz (maximum frequency for the ADC) in the CLKDIV pins.
 \begin{lstlisting} 
 	PCLKSEL0 |= ((1<<25) | (1<<24));
  \end{lstlisting}
 
 
-Pins are selected using a switch case, so we initialise the defined ADC that was send by parameter as SEL. Some of this pins have more than one physical connections, they can be connected to other component on the embedded artists board, as example pin AD0.0, AD0.1, AD0.2 are connected to the accelerometer, so the jumpers have to be changed is the accelerometer measure is not needed. In this example AD0.2 is using the red potentiometer over the display.
+Pins are selected using a switch case, so we initialise the defined ADC that was send by parameter as SEL. Some of this pins already have some physical connections, as example is the pins AD0.0, AD0.1, AD0.2 which are connected to the accelerometer. If these channels wants to be used for something else, the jumpers should for these channels should be removed. The AD0.2 is also using the red potentiometer, here it should be remembered only to connect one of the jumpers, either the potentiometer or the accelerometer.
 
 \begin{lstlisting}
-switch (SEL){
+	switch (SEL){
 		case 0: PINSEL1 |= (1<<14); break; // Selects p0.23
 		case 1: PINSEL1 |= (1<<16); break; // Selects p0.24
 		case 2: PINSEL1 |= (1<<18); break; // Selects p0.25
@@ -43,15 +43,17 @@ switch (SEL){
 		case 5: PINSEL3 |= (1<<30) | (1<<31); break; // Selects p1.31
 		case 6: PINSEL0 |= (1<<24) | (1<<25); break; // Selects p0.12
 		case 7: PINSEL0 |= (1<<26) | (1<<27); break; // Selects p0.13
-		default: break;
+		default:
+			PINSEL1 |= (1<<14) | (1<<16) | (1<<18) | (1<<20) | (1<<28) | (1<<29) | (1<<30) | (1<<31) | (1<<24) | (1<<25) | (1<<26) | (1<<27);
+			break;
 	}
 \end{lstlisting}
 
 
 A\/D control register makes it possible to setup which channel to convert, timing, modes and start trigger if needed. \\
 The clock is set by CLKDIV ( clock division bit 8 ), this value plus one is divided by the PCLK defined before, this should be less or equal to 4.5MHz. \\
-CLKS ( bit 17 ) define the number of clock to be use in each conversion, this can be translate as as accuracy, number of bits from 10 to 3 bits conversion.
-The a/d converter is set as operational setting PDN (bit 21) to high.
+CLKS ( bit 17, 18, 19 ) defines the number of clocks to be used in each conversion, this can be translated as as accuracy, number of bits from 10 to 3 bits conversion.
+The a/d converter is powered up, setting the  operational setting PDN (bit 21) to high.
 
 \begin{lstlisting}
 AD0CR = ((CLKDIV<<8) | (CLKS<<17) | (1<<21));
@@ -60,14 +62,14 @@ AD0CR = ((CLKDIV<<8) | (CLKS<<17) | (1<<21));
 \newpage
 
 \section{Getting Values}
-Reading data from the ADC register is performed on function getAdc, this will be explained above.
+Reading data from the ADC register is performed in the function getAdc, this will be explained below.
 
 \begin{lstlisting}
 	// SEL:  ADC pin 
 	unsigned int getAdc(unsigned short SEL)
 \end{lstlisting}
 
-When starting a new conversion we need to be sure that the register is free since we can only make a conversion from one A/D channel at time. \\ A pin is select and the conversion starts, when the conversion is finish a flag will rise at the correspondent A/D channel (AD0DR0:7), the value will be assigned to the variable unsigned int aVal, a timeout will ensure that the program is not going to stuck waiting for the done signal (bit 31).\\ When the conversion is done the the value is shift so it fits a value from 0 to 1023.
+When starting a new conversion we need to be sure that the register is free since we can only make a conversion from one A/D channel at the time. \\ A pin is select and the conversion starts, when the conversion is finish a flag will rise at the correspondent A/D channel (AD0DR0:7), the value will be assigned to the variable unsigned int aVal, a timeout will ensure that the program is not going to stuck waiting for the done signal (bit 31).\\ When the conversion is done the value is shifted so it fits a value from 0 to 1023.
 
 \begin{lstlisting}
 // Reset AOCR Register since only one of these bits should be 1.
@@ -113,15 +115,15 @@ When starting a new conversion we need to be sure that the register is free sinc
 
 \section{SWIM - Simple Window Interface Management}
 
-SWIM is a basic graphical library develop for NXP LPC products. This library allows developers to quickly implement a system with basic graphical windows. \\ Enabling the possibility of easily draw bail graphics primitives such as lines squares and text.
+SWIM is a basic graphical library develop for NXP LPC products. This library allows developers to quickly implement a system with basic graphical windows. \\ Enabling the possibility of easily drawing graphics such as lines squares and text.
 
-To make the code more readable a new file was created draw.c, this file has already code to draw objects such as horizontal / vertical bars, makes easy to write to a certain position of the screen.
+To make the code more readable a file was created (draw.c), this file contains code to draw objects such as horizontal / vertical bars, and simply just makes it easy to write text or figures to a certain position of the screen.
 
-With this file we were able of quickly create different ADC windows.
+With this file we have been able to quickly create different ADC windows.
 
-draw is documented with help of doxygen in appendix.
+draw.c is documented with help of doxygen in the appendix.
 
-The program exer\_app.c will be use as example.
+The program exer\_app.c will be used as example.
 The SPI communication is initialised so we can send data to the LCD display.
 
 \begin{lstlisting}
