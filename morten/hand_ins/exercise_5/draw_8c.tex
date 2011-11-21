@@ -1,0 +1,144 @@
+\subsection{draw.c}
+\subsection*{\-Functions}
+\begin{DoxyCompactItemize}
+\item 
+void {\bf write} (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$win, int x, int y, char $\ast$text, unsigned int color)
+\begin{DoxyCompactList}\small\item\em \-Write to position. \end{DoxyCompactList}\item 
+void {\bf h\-Bar} (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$win, int start\-Pos\-X, int start\-Pos\-Y, int width, int height, int value, char $\ast$text, char $\ast$title, unsigned int color, int max\-Range)
+\begin{DoxyCompactList}\small\item\em \-Draw a horizontal bar, form left to right. \end{DoxyCompactList}\item 
+void {\bf v\-Bar} (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$win, int start\-Pos\-X, int start\-Pos\-Y, int width, int height, int value, char $\ast$text, char $\ast$title, unsigned int color, int max\-Range)
+\begin{DoxyCompactList}\small\item\em \-Draw a vertical bar from bottom to top. \end{DoxyCompactList}\item 
+void {\bf signature} (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$win)
+\begin{DoxyCompactList}\small\item\em \-Write \-Team 3 signature. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{\-Function \-Documentation}
+\index{draw.\-c@{draw.\-c}!h\-Bar@{h\-Bar}}
+\index{h\-Bar@{h\-Bar}!draw.c@{draw.\-c}}
+\subsubsection[{h\-Bar}]{\setlength{\rightskip}{0pt plus 5cm}void h\-Bar (
+\begin{DoxyParamCaption}
+\item[{\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$}]{win, }
+\item[{int}]{start\-Pos\-X, }
+\item[{int}]{start\-Pos\-Y, }
+\item[{int}]{width, }
+\item[{int}]{height, }
+\item[{int}]{value, }
+\item[{char $\ast$}]{text, }
+\item[{char $\ast$}]{title, }
+\item[{unsigned int}]{color, }
+\item[{int}]{max\-Range}
+\end{DoxyParamCaption}
+)}\label{draw_8c_a4c53b4c5e965efeeabe4d9489d9ec156}
+
+
+\-Draw a horizontal bar, form left to right. 
+
+
+\begin{DoxyParams}{\-Parameters}
+{\em win} & reference of screen structure (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T). \\
+\hline
+{\em start\-Pos\-X} & horizontal screen coordinate (left top corner). \\
+\hline
+{\em start\-Pos\-Y} & vertical screen coordinate (left top corner). \\
+\hline
+{\em height} & vertical size. \\
+\hline
+{\em width} & horizontal size. \\
+\hline
+{\em value} & value to be shown as bar level. \\
+\hline
+{\em text} & \-S\-I units to be shown after the value. \\
+\hline
+{\em title} & bar \-Title, this text is not centered. \\
+\hline
+{\em color} & bar and text color \\
+\hline
+{\em max\-Range} & always goes from 0 to max range.\\
+\hline
+\end{DoxyParams}
+\-Range \-Formula\-: ((value$\ast$(width-\/padding$\ast$2)/(max\-Range))+(start\-Pos\-X+padding)))
+
+\-Issues\-: 1. \-Value conversion is not generic, used for the \-A\-D\-C example only \index{draw.\-c@{draw.\-c}!signature@{signature}}
+\index{signature@{signature}!draw.c@{draw.\-c}}
+\subsubsection[{signature}]{\setlength{\rightskip}{0pt plus 5cm}void signature (
+\begin{DoxyParamCaption}
+\item[{\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$}]{win}
+\end{DoxyParamCaption}
+)}\label{draw_8c_a4405d72257bd96393a9463f628867d2f}
+
+
+\-Write \-Team 3 signature. 
+
+\index{draw.\-c@{draw.\-c}!v\-Bar@{v\-Bar}}
+\index{v\-Bar@{v\-Bar}!draw.c@{draw.\-c}}
+\subsubsection[{v\-Bar}]{\setlength{\rightskip}{0pt plus 5cm}void v\-Bar (
+\begin{DoxyParamCaption}
+\item[{\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$}]{win, }
+\item[{int}]{start\-Pos\-X, }
+\item[{int}]{start\-Pos\-Y, }
+\item[{int}]{width, }
+\item[{int}]{height, }
+\item[{int}]{value, }
+\item[{char $\ast$}]{text, }
+\item[{char $\ast$}]{title, }
+\item[{unsigned int}]{color, }
+\item[{int}]{max\-Range}
+\end{DoxyParamCaption}
+)}\label{draw_8c_a4539d62015b8882c6dec2bb966e06420}
+
+
+\-Draw a vertical bar from bottom to top. 
+
+
+\begin{DoxyParams}{\-Parameters}
+{\em win} & reference of screen structure (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T). \\
+\hline
+{\em start\-Pos\-X} & horizontal screen coordinate (left top corner). \\
+\hline
+{\em start\-Pos\-Y} & vertical screen coordinate (left top corner). \\
+\hline
+{\em height} & vertical size. \\
+\hline
+{\em width} & horizontal size. \\
+\hline
+{\em value} & value to be shown as bar level. \\
+\hline
+{\em text} & \-S\-I units to be shown after the value. \\
+\hline
+{\em title} & bar \-Title, this text is not centered. \\
+\hline
+{\em color} & bar and text color \\
+\hline
+{\em max\-Range} & always goes from 0 to max range.\\
+\hline
+\end{DoxyParams}
+\-Range \-Formula\-: ((-\/value$\ast$(height-\/(padding$\ast$2))/max\-Range)+(start\-Pos\-Y+height-\/padding))
+
+\-Issues\-: 1. \-Units are not written after the value under the bar. 2. \-Value conversion is not generic, used for the \-A\-D\-C example only \index{draw.\-c@{draw.\-c}!write@{write}}
+\index{write@{write}!draw.c@{draw.\-c}}
+\subsubsection[{write}]{\setlength{\rightskip}{0pt plus 5cm}void write (
+\begin{DoxyParamCaption}
+\item[{\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T $\ast$}]{win, }
+\item[{int}]{x, }
+\item[{int}]{y, }
+\item[{char $\ast$}]{text, }
+\item[{unsigned int}]{color}
+\end{DoxyParamCaption}
+)}\label{draw_8c_af29442b54f540f3e2a1afe81dfbfe327}
+
+
+\-Write to position. 
+
+
+\begin{DoxyParams}{\-Parameters}
+{\em win} & reference of screen structure (\-S\-W\-I\-M\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-T) \\
+\hline
+{\em x} & horizontal screen coordinate \\
+\hline
+{\em y} & vertical screen coordinate \\
+\hline
+{\em text} & string to be write \\
+\hline
+{\em color} & text color \\
+\hline
+\end{DoxyParams}
