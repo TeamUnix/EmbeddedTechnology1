@@ -1,0 +1,228 @@
+\input{preamble.tex}
+\usepackage{doxygen}
+\begin{document}
+\part*{EMB 2010 Team3 Exercise5}
+\section{Introduction}
+This exercise is about creating a 2 channel voltmeter that displays the measured voltage on the LCD display using SWIM ( Simple Window Interface Manager).
+A driver is created for the LPC 2478 built-in analog to digital converter (ADC).
+A file (draw.c) is created to make the development of a graphical layout on the LCD display easier and also making possible further improvements easy to implement. 
+\\ \newline
+In the below figure is seen how the clock is routed through the system to the ADC block. The clock value putted into the ADC block is 28.8MHz.
+\\ \newline
+\begin{figure}[h!]
+   \centering
+   \includegraphics[width=1\textwidth]{peripheral_clock_gen.png}
+   \caption{Peripheral clock scaling}
+   \label{fig:example}
+\end{figure}
+
+\newpage
+\section{Initialization}
+
+The ADC is initialized by the function initAdc(unsigned char CLKDIV, unsigned char CLKS, unsigned short SEL).
+\\ \newline
+The initialisation starts by powering up (enabling) the ADC channels, these are disabled at the reset for power saving purpose since it may consume power that is not clock dependent.
+\begin{lstlisting} 
+	PCONP |= (1<<12);
+ \end{lstlisting}
+
+The clock is scaled to a lower frequency, by setting the peripheral clock selection to PCLK\_ADC (bit 25 and 24). We've chosen to divide the CCLK with 2 and do the rest of the scaling down to 4.5MHz (maximum frequency for the ADC) in the CLKDIV pins.
+\begin{lstlisting} 
+	PCLKSEL0 |= ((1<<25) | (1<<24));
+ \end{lstlisting}
+
+
+Pins are selected using a switch case, so we initialise the defined ADC that was send by parameter as SEL. Some of this pins already have some physical connections, as example is the pins AD0.0, AD0.1, AD0.2 which are connected to the accelerometer. If these channels wants to be used for something else, the jumpers should for these channels should be removed. The AD0.2 is also using the red potentiometer, here it should be remembered only to connect one of the jumpers, either the potentiometer or the accelerometer.
+
+\begin{lstlisting}
+	switch (SEL){
+		case 0: PINSEL1 |= (1<<14); break; // Selects p0.23
+		case 1: PINSEL1 |= (1<<16); break; // Selects p0.24
+		case 2: PINSEL1 |= (1<<18); break; // Selects p0.25
+		case 3: PINSEL1 |= (1<<20); break; // Selects p0.26
+		case 4: PINSEL3 |= (1<<28) | (1<<29); break; // Selects p1.30
+		case 5: PINSEL3 |= (1<<30) | (1<<31); break; // Selects p1.31
+		case 6: PINSEL0 |= (1<<24) | (1<<25); break; // Selects p0.12
+		case 7: PINSEL0 |= (1<<26) | (1<<27); break; // Selects p0.13
+		default:
+			PINSEL1 |= (1<<14) | (1<<16) | (1<<18) | (1<<20) | (1<<28) | (1<<29) | (1<<30) | (1<<31) | (1<<24) | (1<<25) | (1<<26) | (1<<27);
+			break;
+	}
+\end{lstlisting}
+
+
+A\/D control register makes it possible to setup which channel to convert, timing, modes and start trigger if needed. \\
+The clock is set by CLKDIV ( clock division bit 8 ), this value plus one is divided by the PCLK defined before, this should be less or equal to 4.5MHz. \\
+CLKS ( bit 17, 18, 19 ) defines the number of clocks to be used in each conversion, this can be translated as as accuracy, number of bits from 10 to 3 bits conversion.
+The a/d converter is powered up, setting the  operational setting PDN (bit 21) to high.
+
+\begin{lstlisting}
+AD0CR = ((CLKDIV<<8) | (CLKS<<17) | (1<<21));
+\end{lstlisting}
+
+\newpage
+
+\section{Getting Values}
+Reading data from the ADC register is performed in the function getAdc, this will be explained below.
+
+\begin{lstlisting}
+	// SEL:  ADC pin 
+	unsigned int getAdc(unsigned short SEL)
+\end{lstlisting}
+
+When starting a new conversion we need to be sure that the register is free since we can only make a conversion from one A/D channel at the time. \\ A pin is select and the conversion starts, when the conversion is finish a flag will rise at the correspondent A/D channel (AD0DR0:7), the value will be assigned to the variable unsigned int aVal, a timeout will ensure that the program is not going to stuck waiting for the done signal (bit 31).\\ When the conversion is done the value is shifted so it fits a value from 0 to 1023.
+
+\begin{lstlisting}
+// Reset AOCR Register since only one of these bits should be 1.
+	AD0CR &= 0xFFFFFF00;
+
+	//Start reading on ADC SEL.
+	AD0CR |= (1<<24) | (1<<SEL);
+
+   /*	Wait for the selected channel to finish converting
+	*	If it takes to long the function returns 0 (Timeout)
+	*/
+	switch(SEL){
+	case 0:
+		while((AD0DR0 & (1<<31)) == 0 && (timeout < 10000)) timeout++;
+		aVal = (AD0DR0 & 0x0000FFC0);
+		break;
+	case 1:
+		while((AD0DR1 & (1<<31)) == 0 && (timeout < 10000)) timeout++;
+		aVal = (AD0DR1 & 0x0000FFC0);
+		break;
+	(...)
+	case 6:
+		while((AD0DR6 & (1<<31)) == 0 && (timeout < 10000)) timeout++;
+		aVal = (AD0DR6 & 0x0000FFC0);
+		break;
+	case 7:
+		while((AD0DR7 & (1<<31)) == 0 && (timeout < 10000)) timeout++;
+		aVal = (AD0DR7 & 0x0000FFC0);
+		break;
+	default:
+		return 0;
+		break;
+	}
+
+	// Stop ADC reading avoid glitch on readings.
+	AD0CR &= 0xF8FFFFFF;
+
+	//The value is shift 6 to fit the value 0-1023 (10 bit value)
+	return (aVal >> 6);
+\end{lstlisting}
+
+\newpage
+
+\section{SWIM - Simple Window Interface Management}
+
+SWIM is a basic graphical library develop for NXP LPC products. This library allows developers to quickly implement a system with basic graphical windows. \\ Enabling the possibility of easily drawing graphics such as lines squares and text.
+
+To make the code more readable a file was created (draw.c), this file contains code to draw objects such as horizontal / vertical bars, and simply just makes it easy to write text or figures to a certain position of the screen.
+
+With this file we have been able to quickly create different ADC windows.
+
+draw.c is documented with help of doxygen in the appendix.
+
+The program exer\_app.c will be used as example.
+The SPI communication is initialised so we can send data to the LCD display.
+
+\begin{lstlisting}
+	/* SSD1289 fclk max 13MHz, clk HI idle, MSB first
+	 * SPIInit(wClock, nFramesize, bCPHA, bCPOL, bLSBF)
+	 */
+	SPIInit(CLK5M, 8, 0, 1, 0);
+
+	/* open and init LCD */
+	open_lcd();
+
+	// Define Color scheme
+	COLOR_T *fblog;
+
+	// Set LCD frame buffer address
+	fblog = (COLOR_T *) EA2478_LCD_FRAME_BUF;
+}
+
+\end{lstlisting}
+
+With the SPI communication set, we can start using SWIM to make the static layout and configurations, this is going to be all the graphics that don't change during the running program such as title and signature and setting the font size.
+
+\begin{lstlisting}
+
+	// Create a SWIM window
+	swim_window_open(&win1, LCD_DISPLAY.pixels_per_line, LCD_DISPLAY.lines_per_panel, fblog, 0, 0,
+			(LCD_DISPLAY.pixels_per_line - 1), (LCD_DISPLAY.lines_per_panel - 1), 1, LIGHTGRAY, WHITE, LIGHTGRAY);
+
+	// select the font to use
+	swim_set_font(&win1, (FONT_T *) &FONT);
+
+	// set the pen color to use
+	swim_set_pen_color(&win1, WHITE);
+
+	// Add a title bar
+	swim_set_title(&win1, " ADC 1 & 2", BLACK);
+
+	//select the font to use
+	swim_set_font(&win1, (FONT_T *) &font_rom8x16);
+
+	// Writes Team 3 Signature
+	signature(&win1);
+
+}
+
+\end{lstlisting}
+ 
+All the dynamic graphics that are constantly changed are inside a while loop, where the AD channel is read and converted to a graphical representation as a vertical bar.
+
+\begin{lstlisting}
+	// 2 vertical bars draw on the window screen.
+	vBar(&win1,60, 80, 50, 140, (getAdc(1)*330/1023), "V","ADC1", BLUE, 330);
+	vBar(&win1,120, 80, 50, 140, (getAdc(2)*330/1023), "V","ADC2", BLUE, 330);
+	
+\end{lstlisting}
+
+
+\begin{lstlisting}
+Our main function:
+
+int main(void){
+
+	// SETS UP BASIC PLATFORM
+	lowLevelInit(); 		
+	
+	// SETS UP THE SDRAM (The framebuffer)
+	SDRAMInit(); 
+
+	// Initialize ADC window
+	init_lcd_exer();
+
+	while(1){
+		// Updates ADC graphics.
+		update_lcd_exer();
+	}
+
+	return 0;
+}
+\end{lstlisting}
+
+
+\section{It's alive...}
+
+
+
+\begin{tabular}{ p{8cm}  p{8cm} }
+  Exercise 5 & Accelerometer  \\
+   \includegraphics[width=0.4\textwidth]{adc12.jpg} & \includegraphics[width=0.39\textwidth]{accel.jpg}  \\
+  exer\_app.c : Perform the requirements of the exercise & accel\_app.c : Use the accelerometer ( A7260 ) to get the analog value from X, Y and Z. \\
+  ~ &~ \\
+  ADC's & Potentiometer\\
+  \includegraphics[width=0.4\textwidth]{adcs.jpg} & \includegraphics[width=0.4\textwidth]{potent.jpg}\\
+   adc\_app.c : Show the values of all ADC channels & mess\_app.c : Show the value at the potentiometer above the LCD display. \\
+\end{tabular}
+
+
+\newpage
+\section{\-File \-Documentation}
+\input{draw_8c}
+
+\end{document}
